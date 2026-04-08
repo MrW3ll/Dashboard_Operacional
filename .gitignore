@@ -1,0 +1,18 @@
+# Cache Python
+__pycache__/
+*.pyc
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Credenciais e config sensível
+confi_banco.py
+db_config.py
+conexao_com_o_banco_pronta_só_meter_ficha_ameeegan.py
+
+# Arquivos que não quero
+bases_limpador.py
+Queries.py
+Gerar_mailing_graduação.py
+app_backup.py
+dummy.ipynb
