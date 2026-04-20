@@ -19,11 +19,20 @@ from streamlit_autorefresh import st_autorefresh
 # CONEXÃO COM O BANCO DE DADOS
 # =============================================================
 
-qry_operacional = text(engs.load_qry('qry_olos.sql'))
-qry_vendas = text(engs.load_qry('qry_sispag.sql'))
-eng = engs.get_engine()
-df_operacional = pd.read_sql(qry_operacional, eng)
-df_vendas = pd.read_sql(qry_vendas, eng)
+try:
+    qry_operacional = text(engs.load_qry('qry_olos.sql'))
+    qry_vendas = text(engs.load_qry('qry_sispag.sql'))
+    eng = engs.get_engine()
+    df_operacional = pd.read_sql(qry_operacional, eng)
+    df_vendas = pd.read_sql(qry_vendas, eng)
+except Exception as e:
+    print(f'Erro: {e}...')
+    print(f'acionando engine secundaria...')
+    eng = engs.get_engine_heavy()
+    df_operacional = pd.read_sql(qry_operacional, eng)
+    df_vendas = pd.read_sql(qry_vendas, eng)
+
+
 
 df_vendas['data'] = pd.to_datetime(df_vendas['data'], errors='coerce')
 df_operacional['data'] = pd.to_datetime(df_operacional['data'], errors='coerce')

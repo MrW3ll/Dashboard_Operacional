@@ -10,7 +10,17 @@ def get_engine():
     password_encoded = quote_plus(DB_PASSWORD)
 
     engine  = create_engine(
-        f"postgresql+psycopg2://{DB_USER}:{password_encoded}@{DB_HOST}:{DB_PORT}/{DB_DATABASE}"
+        f"postgresql+psycopg2://{DB_USER}:{password_encoded}@{DB_HOST}:{DB_PORT}/{DB_DATABASE}",
+        connect_args={'options':'-c statement_timeout=300000'}
+    )
+    return engine
+
+def get_engine_heavy():
+    password_encoded = quote_plus(DB_PASSWORD)
+
+    engine  = create_engine(
+        f"postgresql+psycopg2://{DB_USER}:{password_encoded}@{DB_HOST}:{DB_PORT}/{DB_DATABASE}",
+        connect_args={'options':'-c statement_timeout=600000'}
     )
     return engine
 

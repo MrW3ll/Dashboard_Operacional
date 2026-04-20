@@ -41,7 +41,7 @@ WITH Sispag AS (
     LEFT JOIN app_sispag_pagamento.vd_cliente    ON vd_compra.clienteid    = vd_cliente.clienteid
     LEFT JOIN bu_secad.programs                  ON vd_produto.nomeresumido::text = programs.program
     WHERE DATE(vd_compra.datahora AT TIME ZONE 'UTC' AT TIME ZONE 'America/Sao_Paulo')
-              >= current_date - interval '5 months'
+              >= current_date - interval '3 months'
     AND vd_produto.tipoproduto::text = 'P'
     AND vd_request.ambiente::text    = 'P'
     AND LOWER(vd_cliente.nome::text) NOT LIKE '%teste%'
