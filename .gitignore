@@ -1,6 +1,7 @@
 # Cache Python
 __pycache__/
 *.pyc
+.vscode/
 
 # Jupyter
 .ipynb_checkpoints/
