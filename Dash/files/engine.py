@@ -25,7 +25,7 @@ def get_engine_heavy():
     return engine
 
 
-def load_qry(qry_name):
+def load_query(qry_name):
     base_path = Path(__file__).parent.parent
     path = base_path / 'sql' / qry_name
     with open(path, 'r', encoding='utf-8') as file:
