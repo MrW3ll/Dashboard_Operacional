@@ -41,7 +41,7 @@ def carregar_dados_db() -> dict[str, pd.DataFrame]:
 
     queries = [
         "painel_tickets.sql",
-        "painel_vendas_orbita.sql",
+        "painel_vendas.sql",
 
     ]
 
@@ -60,7 +60,7 @@ def carregar_dados_db() -> dict[str, pd.DataFrame]:
 def tratar_dados(raw: dict[str, pd.DataFrame]) -> pd.DataFrame:
 
     df_tickets = raw["painel_tickets"]
-    df_vendas = raw["painel_vendas_orbita"]
+    df_vendas = raw["painel_vendas"]
 
     ordem_ies ={
         'PUCPR DIGITAL':1,
@@ -74,6 +74,8 @@ def tratar_dados(raw: dict[str, pd.DataFrame]) -> pd.DataFrame:
         'ESPM':8,
         'DOM CABRAL':10
     }
+
+    
 
     print("📊 Colunas de painel_tickets:", df_tickets.columns.tolist())
     print(f"📊 Registros em painel_tickets: {len(df_tickets)}")
@@ -99,6 +101,12 @@ def tratar_dados(raw: dict[str, pd.DataFrame]) -> pd.DataFrame:
         left_on="ies",
         right_on="ies_name",
         how="left",
+    )
+
+    resultado['vendas'] = (
+        pd.to_numeric(resultado['vendas'],errors='coerce')
+        .fillna(0)
+        .astype(int)
     )
 
     resultado = pd.merge(
@@ -162,9 +170,12 @@ def tratar_dados(raw: dict[str, pd.DataFrame]) -> pd.DataFrame:
     resultado["encerrado"] = resultado["encerrado"].fillna(1).astype(int)
     
     # Conversão (evita divisão por zero)
+    
     resultado["conversao"] = (
         (resultado["vendas"] / resultado["encerrado"]) * 100
     ).fillna(0).round(1)
+
+
     resultado['meta_conversao'] = resultado['meta_conversao'] * 100
     resultado['gap_conversao'] = (
         (resultado['conversao'] / resultado['meta_conversao'] - 1) * 100
@@ -181,11 +192,14 @@ def tratar_dados(raw: dict[str, pd.DataFrame]) -> pd.DataFrame:
         ],
         default='Vermelho'
     )
+    
 
     # Calculo de Projeções
-    resultado["projecao"] = ((resultado["vendas"] / horas_trabalhadas) * horas_totais).astype(int)
-
+    resultado["projecao_vendas"] = ((resultado["vendas"] / horas_trabalhadas) * horas_totais).astype(int)
     resultado['projecao_encerrado'] = ((resultado['encerrado'] / horas_trabalhadas) * horas_totais).round(1)
+
+    
+
     resultado['perc_meta_encerrado'] = (resultado['projecao_encerrado'] / resultado['meta_atendimento'] * 100)
 
     resultado['situacao_encerrado'] = np.select(
@@ -223,10 +237,11 @@ def tratar_dados(raw: dict[str, pd.DataFrame]) -> pd.DataFrame:
         "vendas", 
         "situacao_vendas",
         "perc_meta_vendas",
+        "meta_conversao",
         "conversao",
         "gap_conversao",
         "situacao_conversao",
-        "projecao",
+        "projecao_vendas",
         "situacao_fila",
         "situacao_atendimento",
         "desvio",
@@ -256,7 +271,7 @@ def carregar_dados_mock() -> pd.DataFrame:
             "encerrado":       0,
             "vendas":          0,
             "conversao":       0,
-            "projecao":        0,
+            "projecao_vendas": 0,
             "volume_ideal":    0,
             "volume_atual":    0,
         })

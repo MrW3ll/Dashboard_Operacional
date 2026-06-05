@@ -33,7 +33,7 @@ SELECT
     rpch.account_id,
     rpch.conversation_id as id,
     rpch.parent_ticket_id as fist_ticket_id,
-    rpch.opened_at as data_abertura_ticket,
+    rpch.opened_at::date as data_abertura_ticket,
     rpch.hour_opened_at as hora_abertura_ticket,
     rpch.closed_at as closed_date,
     rpch.status as status_old,
@@ -51,7 +51,7 @@ SELECT
     rpch.is_sql as sql
 FROM mart_sales.rpt_partner_conversations_hot rpch
 JOIN map_status ms ON ms.status_atual = rpch.status
-WHERE rpch.opened_at::date = current_date  AND
+WHERE rpch.opened_at::date >= current_date - interval '1 week' AND
 rpch.system = 'BLIP' AND
 rpch.product != 'Artmed 360'
 )
@@ -61,9 +61,10 @@ SELECT
     produto as Ies,
     COUNT (*) FILTER (WHERE status = 'Fila') as Fila,
     COUNT (*) FILTER (WHERE status = 'Atendimento') as "Em Atendimento",
-    COUNT (*) FILTER (WHERE status = 'Encerrado') as Encerrado
+    COUNT (*) FILTER (WHERE status = 'Encerrado' AND closed_date IS NOT NULL and closed_date::date = current_date) as Encerrado
 FROM atend_blip
 WHERE status != 'Descartar'
+AND atendente IS NOT NULL
 GROUP BY produto
 ORDER BY
     CASE produto

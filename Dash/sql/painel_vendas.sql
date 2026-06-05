@@ -73,6 +73,17 @@ vendas_sispag AS (
     SELECT 
         vd_produto.nomeresumido,
         TO_CHAR(DATE_TRUNC('hour', vd_compra.datahora), 'HH24:MI') AS hr,
+        CASE 
+            WHEN vd_compra."codVendedor" = '91118' THEN 'mritzel'
+            WHEN vd_compra."codVendedor" = '9326' THEN 'lsallaberry'
+            WHEN vd_compra."codVendedor" = '9323' THEN 'lsoliveira'
+            WHEN vd_compra."codVendedor" = '9185' THEN 'vcorreia'
+            WHEN vd_compra."codVendedor" = '9167' THEN 'tcandia'
+            WHEN vd_compra."codVendedor" = '91243' THEN 'cassilva'
+            WHEN vd_compra."codVendedor" = '91238' THEN 'jcssilva'
+            WHEN vd_compra."codVendedor" = '91244' THEN 'jrsantos'
+            ELSE NULL
+            END as operator_user,
         vd_compraitem.valor * vd_compra.valortotal / NULLIF(SUM(vd_compraitem.valor) OVER (PARTITION BY vd_compra.compraid), 0) AS value,
             CASE
         WHEN vd_compra."codVendedor" IS NULL THEN 'eCommerce'
@@ -98,6 +109,7 @@ vendas_sispag AS (
     AND vd_request.ambiente::text = 'P'
     AND LOWER(vd_cliente.nome::text) NOT LIKE '%teste%'
 ), 
+
 vendas_agrup as (
 select ies_name,
 count(*) as vendas
@@ -110,7 +122,7 @@ SELECT
 channel as ies_name,
 count(*) as vendas
 FROM vendas_sispag
-WHERE channel = 'SECAD'
+WHERE channel = 'SECAD' and operator_user IS NOT NULL
 GROUP BY channel
 )
 

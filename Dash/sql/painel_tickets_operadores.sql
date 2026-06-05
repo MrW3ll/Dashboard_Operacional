@@ -59,13 +59,14 @@ rpch.product != 'Artmed 360'
 
 SELECT 
     produto as Ies,
+    atendente,
     COUNT (*) FILTER (WHERE status = 'Fila') as Fila,
     COUNT (*) FILTER (WHERE status = 'Atendimento') as "Em Atendimento",
     COUNT (*) FILTER (WHERE status = 'Encerrado' AND closed_date IS NOT NULL and closed_date::date = current_date) as Encerrado
 FROM atend_blip
 WHERE status != 'Descartar'
 AND atendente IS NOT NULL
-GROUP BY produto
+GROUP BY produto, atendente
 ORDER BY
     CASE produto
         WHEN 'PUCPR DIGITAL' THEN 1

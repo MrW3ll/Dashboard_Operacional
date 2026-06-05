@@ -5,6 +5,7 @@ Exibe KPIs de tickets por equipe em cards individuais.
 
 import streamlit as st
 import pandas as pd
+from pathlib import Path
 from data import carregar_dados
 from streamlit_autorefresh import st_autorefresh
 
@@ -23,6 +24,28 @@ st_autorefresh(interval=60 * 1000, key='autorefresh')  # Atualiza a cada 60 segu
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
+    
+    /* ── Fundo global fixo dark ── */
+    html, body,
+    [data-testid="stAppViewContainer"],
+    [data-testid="stAppViewContainer"] > .main,
+    [data-testid="stMain"],
+    [data-testid="stMainBlockContainer"],
+    section.main > div {
+        background-color: #0e1117 !important;
+        color: #fafafa !important;
+    }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background-color: #161b27 !important;
+    }
+
+    /* Header/toolbar do Streamlit */
+    [data-testid="stHeader"] {
+        background-color: #0e1117 !important;
+    }
+
     .block-container { padding-top: 1.5rem; padding-bottom: 1rem; }
 
     .kpi-card {
@@ -61,11 +84,11 @@ st.markdown("""
             border: 2px solid #22c55e;
     }
     .card-fila-amarelo{
-            background: #FFFF00;
+            background: #78350f;
             border: 2px solid #facc15;
     }
     .card-fila-vermelho{
-            background: #FF6347;
+            background: #7f1d1d;
             border: 2px solid #DC143C;
     }
             
@@ -147,19 +170,47 @@ st.markdown("""
 # ─────────────────────────────────────────────
 #  FUNÇÃO REUTILIZÁVEL: renderiza 1 equipe
 # ─────────────────────────────────────────────
-def render_equipe(linha: pd.Series) -> None:
-    cards = [
-        ("fila",           "📥 Fila",             "card-fila"),
-        ("em_atendimento", "💬 Em Atendimento",   "card-em_atendimento"),
-        ("encerrado",      "✅ Encerrado",        "card-encerrado"),
-        ("vendas",         "💰 Vendas",           "card-vendas"),
-        ("conversao",      "🎯 Conversão",        "card-conversao"),  
-        ("projecao",       "📈 Projeção",         "card-projecao"),
+def render_header_equipe(ies: str) -> None:
+    """Renderiza apenas o header (nome da IES + botão operadores)"""
+    col_header, col_btn = st.columns([5, 1])
+    with col_header:
+        st.markdown(f'<div class="equipe-header">📋 {ies}</div>', unsafe_allow_html=True)
+    with col_btn:
+        st.write("")
+        if st.button("👤", use_container_width=True, key=f"btn_operadores_{ies}", help=f"Ver operadores de {ies}"):
+            # Armazenar IES no session_state e navegar
+            st.session_state.ies_filtro = ies
+            st.switch_page("pages/operadores.py")
+
+def render_header_cards() -> None:
+    """Renderiza apenas os títulos dos cards na parte superior"""
+    cards_labels = [
+        "📥 Fila",
+        "💬 Em Atendimento",
+        "✅ Encerrado",
+        "💰 Vendas",
+        "🎯 Conversão",
+        "📈 Projeção",
     ]
-
     
+    colunas = st.columns(6, gap="small")
+    for col, label in zip(colunas, cards_labels):
+        with col:
+            st.markdown(f"""
+            <div style="text-align: center; font-size: 16px; font-weight: 600; color: #aaa; text-transform: uppercase; margin-bottom: 8px;">
+                {label}
+            </div>""", unsafe_allow_html=True)
 
-    st.markdown(f'<div class="equipe-header">📋 {linha["ies"]}</div>', unsafe_allow_html=True)
+def render_cards_equipe(linha: pd.Series) -> None:
+    """Renderiza apenas os cards de métricas da equipe (sem labels)"""
+    cards = [
+        ("fila",                  "📥 Fila",             "card-fila"),
+        ("em_atendimento",        "💬 Em Atendimento",   "card-em_atendimento"),
+        ("encerrado",             "✅ Encerrado",        "card-encerrado"),
+        ("vendas",                "💰 Vendas",           "card-vendas"),
+        ("conversao",             "🎯 Conversão",        "card-conversao"),  
+        ("projecao_vendas",       "📈 Projeção",         "card-projecao"),
+    ]
 
     colunas = st.columns(6, gap="small")
 
@@ -212,10 +263,6 @@ def render_equipe(linha: pd.Series) -> None:
             else:
                 css_class = 'card-encerrado-vermelho'
 
-
-
-        
-        
         if chave == 'em_atendimento':
 
             desvio = linha['desvio']
@@ -239,13 +286,18 @@ def render_equipe(linha: pd.Series) -> None:
 
 
         # Formatação por tipo de campo          ← estava faltando o elif
-        if chave == "projecao":
-            valor_fmt = linha['projecao'] if linha['projecao'] > 0 else "0"
+        if chave == "projecao_vendas":
+
+            
+
+            valor_fmt = linha['projecao_vendas'] if linha['projecao_vendas'] > 0 else "0"
+            
 
 
         elif chave == "conversao":
             valor_fmt = f"{valor:.1f}%"
             gap_conversao = linha['gap_conversao']
+
             if gap_conversao > 0:
                 legenda = f"+{gap_conversao:.1f}% acima da meta"
             elif gap_conversao < 0:
@@ -268,7 +320,6 @@ def render_equipe(linha: pd.Series) -> None:
         with col:
             st.markdown(f"""
             <div class="kpi-card {css_class}">
-                <div class="kpi-label">{label}</div>
                 <div class="kpi-value">{valor_fmt}</div>
                 <div class="kpi-subtitle">{legenda}</div>
             </div>
@@ -278,15 +329,20 @@ def render_equipe(linha: pd.Series) -> None:
 # ─────────────────────────────────────────────
 #  CABEÇALHO DO PAINEL
 # ─────────────────────────────────────────────
-col_titulo, col_atualizar = st.columns([5, 1])
+col_titulo, col_operadores, col_atualizar = st.columns([4, 1, 1])
 
 with col_titulo:
     st.title("📊 Painel de Monitoramento Operacional")
     st.caption("Acompanhamento de tickets por equipe")
 
+with col_operadores:
+    st.write("")
+    if st.button("👤 Operadores", use_container_width=True):
+        st.switch_page(Path("pages")/"operadores.py")
+
 with col_atualizar:
     st.write("")
-    if st.button("🔄 Atualizar dados", use_container_width=True):
+    if st.button("🔄 Atualizar", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
@@ -325,20 +381,33 @@ df_filtrado = df[df["ies"].isin(equipes_selecionadas)]
 
 
 # ─────────────────────────────────────────────
-#  RENDERIZAÇÃO: 2 equipes por linha
+#  RENDERIZAÇÃO: 2 blocos (esquerda e direita)
 # ─────────────────────────────────────────────
 st.divider()
 
 linhas_df = [row for _, row in df_filtrado.iterrows()]
 
-for i in range(0, len(linhas_df), 2):
-    col_esq, col_dir = st.columns(2, gap="large")
+# Dividir equipes em dois blocos: esquerda e direita
+meio = len(linhas_df) // 2
+equipes_esq = linhas_df[:meio]
+equipes_dir = linhas_df[meio:]
 
-    with col_esq:
-        render_equipe(linhas_df[i])
+col_esq, col_dir = st.columns(2, gap="large")
 
-    with col_dir:
-        if i + 1 < len(linhas_df):
-            render_equipe(linhas_df[i + 1])
-
+# ─── BLOCO ESQUERDO ───
+with col_esq:
+    render_header_cards()
     st.write("")
+    for equipe in equipes_esq:
+        render_header_equipe(equipe["ies"])
+        render_cards_equipe(equipe)
+        st.write("")
+
+# ─── BLOCO DIREITO ───
+with col_dir:
+    render_header_cards()
+    st.write("")
+    for equipe in equipes_dir:
+        render_header_equipe(equipe["ies"])
+        render_cards_equipe(equipe)
+        st.write("")
