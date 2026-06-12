@@ -18,7 +18,7 @@ st.set_page_config(
     page_icon="📊",
     layout="wide",
 )
-st_autorefresh(interval=60 * 1000, key='autorefresh')  # Atualiza a cada 60 segundos
+st_autorefresh(interval= 60 * 60 * 1000, key='autorefresh' )  # Atualiza a cada 60 minutos
 # ─────────────────────────────────────────────
 #  ESTILO DOS CARDS
 # ─────────────────────────────────────────────
@@ -60,22 +60,22 @@ st.markdown("""
         justify-content: center;
     }
     .kpi-label  { 
-            font-size: 13.5px; 
+            font-size: 16px; 
             color: #e6e6e6; 
             margin-bottom: 4px; 
             text-transform: uppercase; 
-            font-weight: 500;
+            font-weight: bold;
         }
     .kpi-value  { 
-            font-size: 28px; 
+            font-size: 30px; 
             font-weight: 700; 
             color: #fff; 
         }
     .kpi-subtitle { 
-            font-size: 12.5px;
+            font-size: 13px;
             color: #e6e6e6; 
             margin-top: 4px;
-            font-weight: 700;
+            font-weight: 600;
         }
 
     /* Cores por status */
@@ -197,7 +197,14 @@ def render_header_cards() -> None:
     for col, label in zip(colunas, cards_labels):
         with col:
             st.markdown(f"""
-            <div style="text-align: center; font-size: 16px; font-weight: 600; color: #aaa; text-transform: uppercase; margin-bottom: 8px;">
+            <div style="
+                text-align: center;
+                font-size: 20px; 
+                font-weight: bold; 
+                color: #D3D3D3; 
+                text-transform: uppercase;
+                margin-bottom: 8px;
+            ">
                 {label}
             </div>""", unsafe_allow_html=True)
 
@@ -291,6 +298,7 @@ def render_cards_equipe(linha: pd.Series) -> None:
             
 
             valor_fmt = linha['projecao_vendas'] if linha['projecao_vendas'] > 0 else "0"
+            
             
 
 

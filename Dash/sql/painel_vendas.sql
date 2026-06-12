@@ -66,7 +66,7 @@ vendas_orbita as (
         vendas.*
     FROM mart_sales.ft_captacao_orbita vendas
     LEFT JOIN map_ies produtos on vendas.sk_produto = produtos.id_produto
-    WHERE min_data_pagamento_matricula >= current_date AND 
+    WHERE min_data_pagamento_matricula::date >= current_date - interval '7 days' AND 
         sales_origin = 'Call Center'
 ),
 vendas_sispag AS (
@@ -104,7 +104,7 @@ vendas_sispag AS (
     LEFT JOIN app_sispag_pagamento.vd_request ON vd_compra.requestid = vd_request.requestid
     LEFT JOIN app_sispag_pagamento.vd_cliente ON vd_compra.clienteid = vd_cliente.clienteid
     LEFT JOIN bu_secad.programs ON vd_produto.nomeresumido::text = programs.program
-    WHERE vd_compra.datahora::date = current_date
+    WHERE vd_compra.datahora::date >= current_date - interval '7 days'
     AND vd_produto.tipoproduto::text IN ('P')
     AND vd_request.ambiente::text = 'P'
     AND LOWER(vd_cliente.nome::text) NOT LIKE '%teste%'
@@ -112,7 +112,8 @@ vendas_sispag AS (
 
 vendas_agrup as (
 select ies_name,
-count(*) as vendas
+count(*) FILTER(WHERE min_data_pagamento_matricula::date = current_date) as vendas,
+count(*) FILTER(WHERE min_data_pagamento_matricula::date >= current_date - interval '7 days') as vendas_historico
 from vendas_orbita
 group by ies_name
 
@@ -120,7 +121,8 @@ UNION ALL
 
 SELECT 
 channel as ies_name,
-count(*) as vendas
+count(*) FILTER(WHERE data = current_date) as vendas,
+count(*) FILTER(WHERE data >= current_date - interval '7 days') as vendas_historico
 FROM vendas_sispag
 WHERE channel = 'SECAD' and operator_user IS NOT NULL
 GROUP BY channel

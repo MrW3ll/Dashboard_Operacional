@@ -71,12 +71,26 @@ def carregar_dados_operadores() -> dict[str, pd.DataFrame]:
 
     resultado = {}
 
-    for nome_query in queries:
-        chave = nome_query.replace(".sql","")
-        query = text(engs.load_query(nome_query))
-
-        resultado[chave] = pd.read_sql(query, eng)
-
+    try:
+        with eng.connect() as conn:
+            conexoes = eng.pool.checkedout()
+            print(f'conexoes abertas: {conexoes}')
+            for nome_query in queries:
+                chave = nome_query.replace(".sql","")
+                try:
+                    query = text(engs.load_query(nome_query))
+                    resultado[chave] = pd.read_sql(query,conn)
+                except Exception as e:
+                    print(f'Erro ao carregar "{nome_query}": {e}')
+                    resultado[chave] = pd.DataFrame()
+    finally:
+        conexoes = eng.pool.checkedout()
+        conn.close()
+        eng.dispose()
+        if conexoes > 0:
+            print(f'{conexoes} em aberto... verificar...')
+        else:
+            print(f'{conexoes} em aberto... conexoes encerradas...')
 
     return resultado
 

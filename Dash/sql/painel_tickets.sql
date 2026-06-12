@@ -1,13 +1,13 @@
 with map_status (status_atual,stas_atend) as (
 VALUES
-('active','Descartar'),
+('active','Atendimento'),
 ('ClosedAttendant','Encerrado'),
 ('ClosedClient','Encerrado'),
 ('ClosedClientInactivity','Encerrado'),
 ('enrolled','Matriculado'),
 ('Open','Atendimento'),
 ('qualified','Atendimento'),
-('Transferred','Descartar'),
+('Transferred','Encerrado'),
 ('waiting','Fila'),
 ('Waiting','Fila')
 ),
@@ -20,6 +20,7 @@ SELECT
         WHEN rpch.queue = 'PÓS FAESA' THEN 'GRADUAÇÃO'
         WHEN rpch.queue = 'UCPEL' THEN 'GRADUAÇÃO'
         WHEN rpch.queue = 'UCS' THEN 'GRADUAÇÃO'
+        WHEN rpch.queue = 'URI' THEN 'GRADUAÇÃO'
         WHEN rpch.queue = 'UCS PÓS' THEN 'GRADUAÇÃO'
         WHEN rpch.queue = 'UNIVALI' THEN 'GRADUAÇÃO'
         WHEN rpch.queue = 'UNICEP' THEN 'GRADUAÇÃO'
@@ -61,10 +62,12 @@ SELECT
     produto as Ies,
     COUNT (*) FILTER (WHERE status = 'Fila') as Fila,
     COUNT (*) FILTER (WHERE status = 'Atendimento') as "Em Atendimento",
-    COUNT (*) FILTER (WHERE status = 'Encerrado' AND closed_date IS NOT NULL and closed_date::date = current_date) as Encerrado
+    COUNT (*) FILTER (WHERE status = 'Encerrado' AND closed_date IS NOT NULL and closed_date::date = current_date) as Encerrado,
+    COUNT (*) FILTER (WHERE status = 'Encerrado' AND closed_date IS NOT NULL and closed_date::date = current_date - interval '7 days') as Encerrado_historico
 FROM atend_blip
 WHERE status != 'Descartar'
 AND atendente IS NOT NULL
+and tag not ilike '%FECHADO%'
 GROUP BY produto
 ORDER BY
     CASE produto

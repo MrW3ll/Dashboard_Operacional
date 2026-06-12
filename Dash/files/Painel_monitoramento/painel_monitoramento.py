@@ -18,7 +18,7 @@ st.set_page_config(
     page_icon="📊",
     layout="wide",
 )
-st_autorefresh(interval=60 * 1000, key='autorefresh')  # Atualiza a cada 60 segundos
+st_autorefresh(interval= 60 * 60 * 1000, key='autorefresh' )  # Atualiza a cada 60 minutos
 # ─────────────────────────────────────────────
 #  ESTILO DOS CARDS
 # ─────────────────────────────────────────────
@@ -291,6 +291,7 @@ def render_cards_equipe(linha: pd.Series) -> None:
             
 
             valor_fmt = linha['projecao_vendas'] if linha['projecao_vendas'] > 0 else "0"
+            
             
 
 
